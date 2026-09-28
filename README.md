@@ -1,7 +1,15 @@
 # MediLogix 🩺
 
-> **Rule-Based Medical Diagnosis Expert System**  
-> A college AI project demonstrating Forward Chaining and Backward Chaining inference with MYCIN-style Certainty Factors.
+> **Rule-Based Medical Diagnosis Expert System with Machine Learning Fallback**  
+> An advanced AI project demonstrating Forward Chaining, Backward Chaining with MYCIN-style Certainty Factors, and a trained Machine Learning probabilistic engine for random or partial symptom diagnosis.
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://medilogix.streamlit.app/)
+[![GitHub](https://img.shields.io/badge/GitHub-Partha81--star%2FMediLogix-blue?logo=github)](https://github.com/Partha81-star/MediLogix)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
+[![Tests](https://img.shields.io/badge/Tests-100%20Passed-success)](https://github.com/Partha81-star/MediLogix)
+
+🌐 **Live Deployed Web App:** [https://medilogix.streamlit.app](https://medilogix.streamlit.app)  
+🚀 **1-Click Streamlit Cloud Deploy:** [Deploy on Streamlit Community Cloud](https://share.streamlit.io/deploy?repository=Partha81-star/MediLogix&branch=main&mainModule=app.py)
 
 > ⚠️ **DISCLAIMER — Educational Use Only**  
 > MediLogix is a *demonstration* of classical AI expert-system techniques built for a college AI course. It is **NOT** a real medical diagnostic tool and does **NOT** constitute medical advice. Always consult a qualified healthcare professional for any medical concerns.
@@ -10,31 +18,43 @@
 
 ## Table of Contents
 
-1. [What Is MediLogix?](#what-is-medilogix)
-2. [Forward vs. Backward Chaining — Core Concepts](#forward-vs-backward-chaining)
-3. [Project Architecture](#project-architecture)
-4. [Certainty Factors (MYCIN-style)](#certainty-factors-mycin-style)
-5. [Rule Format & How to Extend the KB](#rule-format--how-to-extend-the-knowledge-base)
-6. [Setup & Running Locally](#setup--running-locally)
-7. [Running the Tests](#running-the-tests)
-8. [Example Runs](#example-runs)
-9. [Rule Network Diagram](#rule-network-diagram)
-10. [Project Structure](#project-structure)
+1. [Live Deployment](#live-deployment)
+2. [What Is MediLogix?](#what-is-medilogix)
+3. [Inference Modes (Forward, Backward, ML)](#inference-modes)
+4. [Project Architecture](#project-architecture)
+5. [Certainty Factors (MYCIN-style)](#certainty-factors-mycin-style)
+6. [Rule Format & How to Extend the KB](#rule-format--how-to-extend-the-knowledge-base)
+7. [Setup & Running Locally](#setup--running-locally)
+8. [Running the Tests (100 Tests)](#running-the-tests)
+9. [Example Runs](#example-runs)
+10. [Rule Network Diagram](#rule-network-diagram)
+11. [Project Structure](#project-structure)
+
+---
+
+## Live Deployment
+
+MediLogix is deployed on **Streamlit Community Cloud**:
+- **Live URL:** [https://medilogix.streamlit.app](https://medilogix.streamlit.app)
+- **Repository:** [https://github.com/Partha81-star/MediLogix](https://github.com/Partha81-star/MediLogix)
+- **Auto-deployment:** Continuous deployment is enabled directly from the `main` branch. Any push to `main` automatically updates the live app.
 
 ---
 
 ## What Is MediLogix?
 
-MediLogix is a **rule-based expert system** — a form of AI that encodes human expert knowledge as a collection of IF-THEN rules, then uses an inference engine to apply those rules automatically.
+MediLogix is a **hybrid medical diagnosis expert system** combining classical rule-based AI with modern machine learning:
+- **20 expert rules** across 10 disease categories (Influenza, COVID-19, Common Cold, Pneumonia, Dengue, Malaria, Typhoid, Gastroenteritis, Hypertension, Migraine, Diabetes, Asthma, UTI).
+- **MYCIN-style certainty factor calculus** for handling clinical uncertainty.
+- **Machine Learning fallback engine** (Random Forest + Logistic Regression + NLP) that predicts diseases even from partial, random, or noisy symptom combinations where strict rules cannot fire 100%.
 
-It covers 20 rules across 10 diseases (flu, COVID-19, common cold, pneumonia, dengue, malaria, typhoid, gastroenteritis, hypertension, migraine, diabetes, asthma, UTI).
-
-The system has **two inference modes**, each demonstrating a fundamentally different reasoning strategy:
+The system features **three inference modes**:
 
 | Mode | Direction | Starting point | What it does |
 |------|-----------|----------------|--------------|
-| **Forward Chaining** | Bottom-up / data-driven | Known symptoms | Derives every reachable diagnosis |
-| **Backward Chaining** | Top-down / goal-driven | A hypothesis disease | Asks only the questions it needs to prove/reject |
+| **🔵 Forward Chaining** | Bottom-up / data-driven | Selected symptom checkboxes | Evaluates expert rules with MYCIN CFs; activates ML fallback if partial evidence |
+| **🟢 Backward Chaining** | Top-down / goal-driven | A hypothesis disease | Asks only the necessary yes/no questions to prove or reject the hypothesis |
+| **🧠 ML & Random Predictor** | Probabilistic pattern AI | Any random/noisy symptoms | Computes full probability distributions across all conditions using trained ML models |
 
 ---
 
@@ -118,15 +138,19 @@ medilogix/
 ├── working_memory.py       # Belief state: facts with True/False/Unknown
 ├── inference_engine.py     # forward_chain() + backward_chain() algorithms
 ├── explanation.py          # Tracer — records rule firings, generates "Why?" output
-├── app.py                  # Streamlit UI — two inference modes
-├── requirements.txt
+├── ml_predictor.py         # Machine Learning probabilistic classifier & NLP parser
+├── app.py                  # Streamlit web UI — 3 inference modes
+├── requirements.txt        # Python dependencies
 ├── pyproject.toml          # pytest config
+├── .streamlit/
+│   └── config.toml         # Cloud deployment styling & server settings
 └── tests/
     ├── test_forward_chain.py   # 16 tests
     ├── test_backward_chain.py  # 22 tests
     ├── test_explanation.py     # 22 tests
     ├── test_knowledge_base.py  # 16 tests
-    └── test_working_memory.py  # 17 tests
+    ├── test_working_memory.py  # 17 tests
+    └── test_ml_predictor.py    # 7 tests  (100 tests total)
 ```
 
 ### Module Responsibilities
@@ -137,7 +161,8 @@ medilogix/
 | `working_memory.py` | Session state — facts with three states: True / False / Unknown. |
 | `inference_engine.py` | Algorithms only — no UI, no data. Depends on the two above. |
 | `explanation.py` | Cross-cutting concern — receives events from the engine, formats them. |
-| `app.py` | Presentation layer — depends on all four above, Streamlit only. |
+| `ml_predictor.py` | Statistical AI — Random Forest + Logistic Regression probabilistic diagnosis. |
+| `app.py` | Presentation layer — Streamlit interface with visual inference chains. |
 
 ---
 
